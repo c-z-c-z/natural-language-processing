@@ -5,7 +5,7 @@
 The aim of this project was to explore a corpus of in-game chat messages from the MMORPG Toontown Rewritten primarily through calculating and examining metrics related to sentiment, namely polarity and subjectivity, as well as metrics such as message length and token frequencies. 4000 messages were compiled by hand throughout March 2022.   
 
 ## Implementation and libraries
-This analysis was undertaken in Python primarily with the help of textblob and vaderSentiment. matplotlib, seaborn, and wordcloud were used for visualization, and pandas and numpy were used for data manipulation.
+This analysis was undertaken in Python primarily with the help of textblob and VADER. matplotlib, seaborn, and wordcloud were used for visualization, and pandas and numpy were used for data manipulation. Read more about VADER here: https://github.com/cjhutto/vaderSentiment
 
 ## Results and observations
 Messages deemed neutral comprised the majority of the corpus for both analyzers (textblob and vaderSentiment). However, textblob judged 69.7% of messages in the corpus to be neutral while vaderSentiment returned 57.7%, which is likely due to vaderSentiment being more specifically attuned to online communication contexts and thus able to tease out meaning from messages textblob could not actually understand and therefore deemed neutral. This analyzer was able to correctly interpret many acronyms and abbreviations, such as 'ty', 'yw', 'np', 'jk', 'ez', 'ftw', and 'ily', and judge their sentiment appropriately.
