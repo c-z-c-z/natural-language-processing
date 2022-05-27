@@ -6,3 +6,6 @@ This project investigated and analyzed a corpus of 4000 chat messages from the M
 
 ## Dota 2 message corpus analysis
 This project was dedicated to the analysis of an extensive corpus of DOTA 2 chat messages using VADER. The folder contains two code files, two .txt files consisting of all individual words in the corpus, various plots created with matplotlib and seaborn, as well as the dataset, which can be downloaded from https://www.kaggle.com/datasets/devinanzelmo/dota-2-matches 
+
+## LDA and NMF analysis on Toontown Rewritten message corpus
+In this project, I performed latent Dirichlet allocation and non-negative matrix factorization on my preexisting corpus of 4000 Toontown Rewritten chat messages. Analysis was carried out in Python using scikit-learn and VADER. The folder contains two code files and the message corpus
