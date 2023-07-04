@@ -151,9 +151,8 @@ import textblob
 ```
 
 ```{python chdir, include=FALSE}
-os.chdir('/Users/ethancz/Downloads/data/ttr-data/nlp/corpora')
-corpus = pd.read_csv('nlp2.csv', header=None)
-os.chdir('/Users/ethancz')
+#Change your working directory and run pd.read_csv('ttr_demographic_corpus.csv', header=None)
+#You could also do this analysis in TextBlob directly in R
 ```
 
 ```{python subj-python, results='hide'}
