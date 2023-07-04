@@ -151,7 +151,7 @@ import textblob
 ```
 
 ```{python chdir, include=FALSE}
-#Change your working directory and run pd.read_csv('ttr_demographic_corpus.csv', header=None)
+#Change your working directory as/if necessary and run pd.read_csv('ttr_demographic_corpus.csv', header=None)
 #You could also do this analysis in TextBlob directly in R
 ```
 
