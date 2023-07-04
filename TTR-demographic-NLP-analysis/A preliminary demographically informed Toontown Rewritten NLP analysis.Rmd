@@ -1,0 +1,437 @@
+---
+title: "A preliminary demographically informed analysis of Toontown Rewritten chat message data"
+author: "Ethan CZ"
+date: "`r Sys.Date()`"
+output: pdf_document
+bibliography: references.bib
+nocite: |
+  @*
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE)
+```
+
+```{r packages, include=FALSE}
+#Run following line of code if you are missing any necessary packages
+#install.packages('ggplot2', 'dplyr', 'stringr', 'tidyverse', 'tidytext', 'vader')
+
+library(ggplot2)
+library(dplyr)
+library(stringr)
+library(tidyverse)
+library(tidytext)
+library(vader)
+
+-----
+
+#Set working directory and import corpus using read.csv('ttr_demographic_corpus.csv', header = F,
+#col.names = c('message','species','laff','gender','missing'))
+```
+
+```{r python-setup, include=FALSE}
+#Run following if you don't have the reticulate package
+#install.packages('reticulate')
+
+library(reticulate)
+```
+
+# Introduction
+Toontown Rewritten, released in 2013 as a community reincarnation of Disney's Toontown Online, is a MMORPG in which the player creates a character called a Toon and completes in-game tasks in order to advance through various game areas. Toons are highly customizable and the player is able to select from many options for species, colours, clothing items, and weapons, which are referred to in-game, as well as from this point forward in the present document, as Gags. It is also possible to communicate through text chat, which relies on a set of whitelisted words, numerals, and symbols. Demographic analyses of Toon characteristics have been carried out previously, and natural language processing, referred to from this point forward as NLP, analyses of chat data have also been performed. The document at hand is a preliminary marriage of these two spheres; a linguistic analysis of a message corpus which takes demographic factors into account. Previous demographic work on Toontown Rewritten has been very informative while previous NLP work has been much less informative. This current work was thus motivated by a belief that combining the two areas and allowing them to inform each other would generate meaningful and novel observations. To carry out this analysis, a corpus which consisted of 4000 text chat messages and various pieces of demographic information related to the speaker of each message was assembled by hand between August 2022 and January 2023. The data was subsequently preprocessed, cleaned, explored, and analyzed with R and Python. Unfortunately, analysis yielded few interesting or notable results. The lack of conclusive results in this study demonstrates firmly that more investigation, the possibility of which will be created through the collection of much larger amounts of data, is necessary. 
+
+# Background
+### Previous work
+I have done previous Toontown Rewritten-related data analysis and NLP work but until this present analysis these two domains had remained separate in my research. In January 2022, I published my paper *An Exploration of Toontown Rewritten Demographics* which reported on the demographic characteristics of a population sample of 3000 Toons and contained extensive correlation and statistical analyses related to this information. The most notable finding of this project was the existence of co-occurring bundles of demographic features and a certain subpopulation of Toons who appear to be perpetuating various countercultural trends. In April 2022, I published a corpus analysis of 4000 chat messages I had collected in-game. The analysis reported on exclusively NLP-related metrics, namely sentiment, subjectivity, and message length, as well as the most frequently occurring tokens in the corpus. In May of the same year, I published another brief NLP-focused analysis carried out on that preexisting corpus wherein I performed latent Dirichlet allocation, which represents documents as groups of topics which output words at varying probabilities, and non-negative matrix factorization, which performs dimensionality reduction and clustering. Neither of these analyses yielded meaningful or particularly coherent results, which I tentatively hypothesize may be due to the relatively small size of the corpus, their online chat context origin, and the inherent short length of the messages due to in-game constraints. The seed for the project at hand was planted by a desire to integrate these areas of research into a broader as well as more in-depth analysis. There is an inherent overlap: the demographic characteristics which I chose to analyze here were present in my first demographic analysis and I examined the same NLP metrics in this analysis as I did in my first corpus analysis.
+
+### ... and how it has informed the current work
+Hindsight has made it clear to me that my initial demographic analysis was far too ambitious to the point of likely producing incorrect or misleading results. Some of the metrics that I recorded and analyzed were highly mutable, such as in-game clothing and the name tag the individual was wearing, as both of these can be changed at will, and I had opted to omit a very large portion of the population, Toons who had not yet entered the final area of the game.^[In Toontown, a Toon may possess six out of seven Gag tracks, or varieties of Gags. When a Toon acquires their sixth and final Gag track, they enter the final gameplay area. I had included which Gag track a Toon was missing as a demographic metric and had therefore deemed it necessary to record demographic information exclusively for Toons who had progressed significantly in the game, omitting a very large section of the population.] I kept these previous methodologically questionable decisions in mind in terms of my research design for the current project. 
+
+It is important to note that all previous analyses have been performed in Python while the work at hand was conducted in R (v4.1.2). There are a multitude of reasons for this, but my primary three were that I wanted to take advantage of R's data visualization capabilities in terms of plots and tables, improve my R skills, and utilize the R Markdown functionality to craft and format a report about my work. 
+
+# Dataset
+### Collection
+The dataset utilized to carry out the current project is a corpus consisting of 4000 chat messages and various demographic details of the speaker of each message collected by hand between August 2022 and January 2023. Toontown data must be collected by hand, a somewhat laborious task which has limited the scope of my research in this area.^[I suspect that the true accuracy of my previous Toontown data analysis work and the lack of conclusivity or meaningful results delivered by various Toontown projects has been heavily affected by the fact that my datasets are quite small by the standards of the field of data analysis. However, due to the sheer amount of time it can take to type out each observation by hand, there does not seem at present to be a way to easily change this characteristic of the corpora. My Toontown research stretches over a large timescale for the time being but will presumably slowly become easier and more efficacious as larger corpora are progressively constructed.]
+
+### Structure
+The core dataset consists of five columns: **message**, the text of an in-game chat message, and four demographic characteristics of the speaker. I will explain briefly to what each of these metrics pertains as they will be unfamiliar to those who are not acquainted with Toontown. **species** refers to the animal species of the Toon, **laff** refers to the Toon's total health points, referred to in Toontown as Laff points, **gender** refers to the Toon's gender, and **missing** refers to which of the seven types of Gags the Toon does not possess, as it is only possible to obtain six in total. This is a significant reduction in demographic metrics from my demographic study published in January 2022. The metrics **colour**, **dl**, and **leg_colour**, referring to the colour of the Toon, whether or not their legs were the same colour as the rest of their body, and the alternate leg colour if present, **organic**, the Gag track to which the Toon had opted to give extra power by growing it in their garden, **name_tag**, the font style of the name which floats above the Toon's head, and **flippy**, a Boolean expressing whether or not a Toon was wearing a certain relatively exclusive style of shirt, were omitted from the present study. My primary motivation for the omission was that all of the omitted characteristics are mutable. An individual is able to quite easily change their Toon's colour, name tag, clothing, and which Gag track they choose to grow organically. I believe that basing such a large portion of my previous analysis on mutable demographic characteristics was not methodologically sound and thus may have led to incorrect or misleading results because it inherently introduces repeated observations. I dropped exact duplicate rows from the final dataset, but this is somewhat useless when easily mutable characteristics are used as factors in the analysis. A Toon who returns to their estate to change which name tag they were utilizing is counted as an entirely different Toon if witnessed again a short time later. 
+
+All demographic characteristics included in the present study with the exception of **laff** are immutable. It is not possible to change the species or gender of your Toon once they have been created, nor is it possible to change your mind about which Gags you have once the sixth and final track has been received. It is possible to increase your Laff by completing tasks and activities, and this is the main way by which progression through the game's storyline is measured. However, I made the choice to include it as a metric in the present study because it turned out to be a very important predictor in my previous demographic study and the issue of repeated observations is not as damning of an issue here due to the fact that I am not concerned with representing the demographic characteristics of a sample of a larger population. It also allows the analysis to represent any changes in NLP metrics as a Toon increases in Laff. It is additionally important to note that I decided to expand the scope of the population to analyze Toons at all Laff levels, as in my demographic study I only included Toons who had received their final Gag track in order to include **missing_track** as a factor. A similar metric is included here as **missing** but it now includes a level *nm* which indicates "not maxed", referring to a Toon who has less than six Gag tracks. 
+
+# Methods
+
+### Preprocessing / cleaning
+Prior to beginning the NLP analysis, the corpus was cleaned and preprocessed. Data cleaning consisted of finding typos which were inserted into the corpus during data collection. Preprocessing consisted of removing punctuation from chat messages, rendering all messages lowercase, and trimming any whitespace. The **stringr** package was utilized for preprocessing.  
+
+```{r unique-species-example}
+unique(corpus$species)
+```
+
+```{r fixing-typos}
+corpus[corpus$species == 'monk',]$species <- 'monkey'
+corpus[corpus$species == 'deeer',]$species <- 'deer'
+corpus[corpus$species == 'moiuse',]$species <- 'mouse'
+corpus[corpus$species == 'bean',]$species <- 'bear'
+corpus[corpus$species == 'cat`',]$species <- 'cat'
+```
+
+```{r other-typos, include=FALSE}
+corpus[corpus$gender %in% c('f ','g'),]$gender <- 'f'
+corpus[corpus$gender == 'n',]$gender <- 'm'
+
+#unique(corpus$missing)
+corpus[corpus$missing %in% c('lire','liure'),]$missing <- 'lure'
+corpus[corpus$missing %in% c('trp','trao'),]$missing <- 'trap'
+```
+
+```{r text-preprocessing}
+corpus$message <- corpus$message %>% str_replace_all("[[:punct:]]", "")
+corpus$message <- corpus$message %>% tolower()
+corpus$message <- corpus$message %>% trimws(which='both')
+```
+
+The columns **species**, **gender**, and **missing** were converted to factors as they encode categorical data and **laff** was converted to a numeric vector. 
+
+```{r factor-conversion}
+corpus$species <- as.factor(corpus$species)
+corpus$gender <- as.factor(corpus$gender)
+corpus$missing <- as.factor(corpus$missing)
+
+corpus$laff <- as.numeric(corpus$laff)
+```
+
+### NLP metric calculations
+After cleaning and preprocessing were performed, various NLP metrics were calculated. Each message was split into a vector of its component word tokens and these vectors were assigned to the column **tokens**. 
+
+```{r token-vectorization}
+corpus$tokens <- corpus$message %>% strsplit('[ ]')
+```
+
+For each chat message, word count and character count were calculated and assigned to the columns **wordlen** and **charlen**. 
+
+```{r wordandcharlengths}
+corpus$wordlen <- corpus$tokens %>% lengths()
+corpus$charlen <- corpus$message %>% nchar()
+```
+
+Sentiment was calculated for each message using a two-step process. First, a numeric sentiment value was calculated for each message using the **vader** package, a sentiment analysis tool which is specifically attuned to text from social media contexts. Each numeric sentiment value was appended to a vector which was subsequently assigned to the **sentiment** column. Each message was designated either positive, neutral, or negative based on its numeric sentiment value. A numeric value of zero indicates a message deemed by the algorithm to be neutral, a positive value indicates a message of positive sentiment, and a negative value indicates a message of negative sentiment. These designations were appended to a vector which was assigned to the column **sentimentjudgment** and converted to a factor.
+
+```{r sentiment-calc}
+messages <- corpus$message
+sentiment.values=c()
+for (m in messages) {
+  s <- as.numeric(get_vader(m)[2])
+  sentiment.values <- append(sentiment.values,s)
+}
+corpus$sentiment <- sentiment.values
+
+sentiment.judgments = c()
+
+for (val in list(sentiment.values)) {
+  if (val == 0) {
+    sentiment.judgments <- append(sentiment.judgments,'neutral')
+  } else if (val>0) {
+    sentiment.judgments <- append(sentiment.judgments,'positive')
+  } else {
+    sentiment.judgments <- append(sentiment.judgments,'negative')
+  }
+}
+
+corpus$sentimentjudgment <- sentiment.judgments
+corpus$sentimentjudgment <- as.factor(corpus$sentimentjudgment) 
+```
+
+Subjectivity metrics, referring to the degree of bias or personal opinion in a text, for each message unfortunately had to be calculated externally in Python, read into R as a text file, and appended to the corpus as the **subjectivity** column. I repeatedly attempted to integrate TextBlob into my R environment in order to calculate the values in R, but I was unable to do so. I had intended to explain in this section the errors which I encountered during my attempts to integrate TextBlob, but upon returning to my previous code to troubleshoot, it appears that I am now successfully able to integrate the package into R. I remain unsure as to why it was not initially possible to do this. Using TextBlob in an R environment is the anticipated method of subjectivity analysis for future NLP research.  
+
+For this investigation, I used the **pandas** package to read the corpus into Python as a data frame and **textblob** to calculate subjectivity for each message. The calculations were subsequently written to a text file. 
+
+```{python packages-python}
+import os
+import pandas as pd
+import textblob
+```
+
+```{python chdir, include=FALSE}
+os.chdir('/Users/ethancz/Downloads/data/ttr-data/nlp/corpora')
+corpus = pd.read_csv('nlp2.csv', header=None)
+os.chdir('/Users/ethancz')
+```
+
+```{python subj-python, results='hide'}
+messages = corpus[0]
+sentiments = []
+
+for m in messages:
+    sentiment = textblob.TextBlob(m).sentiment.subjectivity
+    sentiments.append(round(sentiment,3))
+    
+with open('sentiments_nlp2.txt','w') as f:
+    for s in sentiments:
+        f.write(f"{s}\n")
+```
+
+The text file of subjectivity calculations was read into R and used to create a column called **subjectivity**.  
+
+```{r subj-r}
+sentiments <- read.delim('sentiments_nlp2.txt',header=F,sep='\n')
+corpus$subjectivity <- sentiments
+```
+
+# Results
+
+### Population details
+It is very important to note here that all figures below refer to frequencies of chat messages across various demographics as opposed to sizes of demographic groups within the population. For example, *n* = 1336 in the table below indicates that 1336 of the 4000 chat messages collected were uttered by cats, not that 1336 individual cats were observed. 
+
+##### Species distribution
+```{r species-proportions, echo=FALSE}
+corpus %>% group_by(species) %>% summarise(n = n()) %>% mutate(percentage = round(n/sum(n)*100,1)) %>% arrange(desc(percentage)) %>% as.data.frame()
+```
+
+##### Gender distribution
+```{r gender-proportions, echo=FALSE}
+corpus %>% group_by(gender) %>% summarise(n = n()) %>% mutate(percentage = round(n/sum(n)*100,1)) %>% arrange(desc(percentage)) %>% as.data.frame()
+```
+
+##### Missing Gag track distribution
+```{r missing-proportions, echo=FALSE}
+corpus %>% group_by(missing) %>% summarise(n = n()) %>% mutate(percentage = round(n/sum(n)*100,1)) %>% arrange(desc(percentage)) %>% as.data.frame()
+```
+
+##### Laff point distribution
+These population-wide results displayed below are strikingly similar to those of my original Toontown Rewritten demographic analysis. I had assumed that this would not be the case due to the fact that this analysis contains repeated observations of the same Toon, as each message was treated as a new observation even if the Toon who said it had previously spoken, while the purely demographic analysis did everything in its power to avoid the repetition of individual Toons in the dataset. However, percentages of each species and gender across the population are nearly identical between the two analyses. Missing track percentages diverged due to the inclusion of a new factor level pertaining to Toons who had not yet received their final Gag track, as did Laff point distribution as the maximum Laff points a Toon can obtain has increased from 137 to 140 since the publication of my first demographic analysis. Despite this change, the shape of the line graphs is quite similar, with a large jump between approximately 100 and 115 Laff and a sudden sharp peak at maximum Laff.
+
+```{r laff-plot, echo=FALSE, fig.width=10, fig.height=5}
+laff_freq <- corpus %>% group_by(laff) %>% summarise(n=n()) %>% arrange(laff) %>% as.data.frame()
+
+ggplot(laff_freq, aes(x=laff, y=n)) + geom_line() + scale_x_continuous(breaks=seq(15,140,5)) + scale_y_continuous(breaks=seq(0,200,20))
+```
+
+### NLP metrics
+
+#### Word and character counts
+Mean values for character and word count across the levels of **species**, **gender**, and **missing** are nearly identical. The mean word and character counts from my first corpus analysis are similar but slightly lower, sitting at 3.5 and 16.5, respectively. 
+
+```{r length-species, echo=FALSE}
+corpus %>% group_by(species) %>% summarise(avg_words = round(mean(wordlen),1), avg_char = round(mean(charlen),1)) %>% as.data.frame()
+```
+
+```{r length-gender, echo=FALSE}
+gender <- c('male', 'female')
+avg_words <- c(4.3, 4.3)
+avg_char <- c(19.7,19.4)
+length_gender <- data.frame(gender, avg_words, avg_char)
+length_gender
+```
+
+```{r length-missing, echo=FALSE}
+missing <- c('nm', 'toon-up', 'trap', 'lure', 'sound', 'drop')
+avg_words <- c(4.3,4.0,4.3,4.0,4.5,4.3)
+avg_char <- c(20.3,18.0,19.9,18.0,20.6,19.3)
+length_missing <- data.frame(missing, avg_words, avg_char)
+length_missing
+```
+
+##### Word and character counts and Laff points
+I was very intrigued by the sudden leap in average characters as displayed on the second plot below. Upon filtering the corpus based on the outlier, I discovered that there was only one single message in the corpus from a Toon with 59 Laff points. Throughout this analysis, when NLP metrics are compared across Laff values, many of them stabilize as Laff increases, presumably due to the amount of messages per Laff value tending to increase as Laff increases.
+
+```{r wordlen-plot, echo=FALSE, fig.width=10, fig.height=5}
+#plot mean word and char lengths 
+
+laff_word <- corpus %>% group_by(laff) %>% summarise(avg_words = round(mean(wordlen),1)) %>% arrange(laff) %>% as.data.frame()
+
+ggplot(laff_word, aes(x=laff, y=avg_words)) + geom_line() + scale_x_continuous(breaks=seq(15,140,5)) + scale_y_continuous(limits=c(0,8))
+```
+
+```{r charlen-plot, echo=FALSE, fig.width=10, fig.height=5}
+laff_char <- corpus %>% group_by(laff) %>% summarise(avg_char = round(mean(charlen),1)) %>% arrange(laff) %>% as.data.frame()
+
+ggplot(laff_char, aes(x=laff, y=avg_char)) + geom_line() + scale_x_continuous(breaks=seq(15,140,5)) + scale_y_continuous(limits=c(0,40))
+```
+
+```{r 59laffexample, echo=TRUE}
+laff_char %>% filter(avg_char==40)
+corpus %>% filter(laff==59) %>% summarise(count=n())
+```
+
+#### Sentiment
+
+Population-wide results for average message sentiment and percentages for each of the three levels of **sentimentjudgment** are somewhat similar to those observed in my first NLP analysis. Average sentiment for this analysis is higher, 0.111 as opposed to 0.061 from the first analysis, which makes sense as there is a larger proportion of positive messages and a smaller proportion of neutral and negative messages in the current corpus. The first corpus analysis yielded 29.1% positive messages, 57.7% neutral messages, and 13.2% negative messages while the present analysis has yielded 35.0% positive messages, 53.1% neutral messages, and 11.9% negative messages.
+
+```{r sentiment-overall, echo=FALSE}
+avg_sentiment <- c(0.111)
+overall_sent_df <- data.frame(avg_sentiment)
+overall_sent_df
+
+sentiment <- c('positive', 'neutral', 'negative')
+sent_percents <- c(35.0, 53.1, 11.9)
+sent_percent_df <- data.frame(sentiment,sent_percents)
+sent_percent_df
+```
+
+##### Sentiment and species
+```{r sentiment-species, echo=FALSE}
+
+species <-  c('bear', 'cat', 'crocodile', 'deer', 'dog', 'duck', 'horse', 'monkey', 'mouse', 'pig', 'rabbit')
+avg_sentiment <- c(0.143, 0.093, 0.178, 0.111, 0.082, 0.122, 0.058, 0.109, 0.122, 0.121, 0.177)
+sent_df <- data.frame(species, avg_sentiment)
+sent_df
+
+spec_counts <- c(205,1336,165,421,590,329,71,117,415,78,273)
+pos <- c(73,430,79,145,194,123,17,38,150,30,119)
+neu <- c(113,725,74,228,312,175,44,67,214,38,136)
+neg <- c(19,181,12,48,84,31,10,12,51,10,18)
+
+positive <- round((pos/spec_counts)*100,1)
+neutral <- round((neu/spec_counts)*100,1)
+negative <- round((neg/spec_counts)*100,1)
+
+sent_species_df <- data.frame(species,positive,neutral,negative)
+sent_species_df
+```
+
+##### Sentiment and gender
+```{r sentiment-gender, echo=FALSE}
+
+gender <- c('male', 'female')
+avg_sentiment <- c(0.124, 0.096)
+sent_df2 <- data.frame(gender, avg_sentiment)
+sent_df2
+
+gender_counts <- c(1843,2157)
+pos <- c(594,804)
+neu <- c(1018,1108)
+neg <- c(231,245)
+
+positive <- round((pos/gender_counts)*100,1)
+neutral <- round((neu/gender_counts)*100,1)
+negative <- round((neg/gender_counts)*100,1)
+
+sent_gender_df <- data.frame(gender,positive,neutral,negative)
+sent_gender_df
+
+#testframe2 <- corpus %>% subset(select = c(species,sentimentjudgment))
+#testframe2 %>% group_by(species) %>% count(sentimentjudgment) #%>% spread(sentimentjudgment,n) %>% as.data.frame()
+
+
+```
+
+##### Sentiment and missing track
+```{r sentiment-missing, echo=FALSE}
+
+missing <- c('nm', 'toon-up', 'trap', 'lure', 'sound', 'drop')
+avg_sentiment <- c(0.152,0.069,0.101,0.113,0.070,0.101)
+sent_df3 <- data.frame(missing, avg_sentiment)
+sent_df3
+
+missing_counts <- c(918,269,1305,221,67,1220)
+pos <- c(382,78,441,80,20,397)
+neu <- c(446,149,705,120,37,669)
+neg <- c(90,42,159,21,10,154)
+
+positive <- round((pos/missing_counts)*100,1)
+neutral <- round((neu/missing_counts)*100,1)
+negative <- round((neg/missing_counts)*100,1)
+
+sent_missing_df <- data.frame(missing,positive,neutral,negative)
+sent_missing_df
+
+```
+
+Many demographic groups in this analysis have very few messages in the corpus and thus their results may initially appear to be outliers or notable in some way. For example, messages uttered by horse Toons have by far the lowest average sentiment, sitting at 0.058, but horses make up only 1.8% of the corpus. It is thus impossible to determine with the current data if this divergence is systematic in any way. This observation could also be made for Toons who are missing either Toon-up or Sound, whose average sentiment values are 0.069 and 0.070, respectively, noticeably lower than those of the other levels of **missing**, but these groups combined comprise only 8.4% of the corpus. More data will be necessary to determine if any of the smaller demographic groups show consistently divergent NLP results. 
+
+##### Sentiment and Laff points
+As stated previously, message frequency tends to increase as Laff increases, so the variance in average sentiment values stabilizes as Laff increases. An identical trend is observed below for average subjectivity across Laff values.
+
+```{r sentiment-plot, echo=FALSE, fig.width=10, fig.height=5}
+avg_sent_by_laff <- corpus %>% group_by(laff) %>% summarise(avg_sentiment=mean(sentiment)) %>% arrange(laff) %>% as.data.frame()
+
+laff <- avg_sent_by_laff$laff
+avg_sentiment <- avg_sent_by_laff$avg_sentiment
+
+ggplot(avg_sent_by_laff, aes(x=laff, y=avg_sentiment)) + geom_line() + scale_x_continuous(breaks=seq(15,140,5)) #+ scale_y_continuous(limits=c(0,0.5))
+```
+
+##### Subjectivity
+Strikingly, mean subjectivity from my first Toontown corpus analysis was 0.195 and mean subjectivity from the current analysis is 0.194. It is intriguing that sentiment metrics jumped noticeably in an overall positive direction while subjectivity remained nearly identical. One might suppose that subjectivity would increase as overall sentiment becomes more positive, indicating movement towards more subjective language, but this appears not to be the case for these data.    
+
+```{r subj-overall, echo=FALSE}
+corpus %>% summarise(avg_subjectivity=round(mean(subjectivity$V1),3)) %>% as.data.frame()
+```
+
+##### Subjectivity and species
+```{r subj-species, echo=FALSE}
+subj_species <-  corpus %>% group_by(species) %>% summarise(avg_subjectivity = round(mean(subjectivity$V1),3)) %>% as.data.frame()
+subj_species
+```
+
+##### Subjectivity and gender
+```{r subj-gender, echo=FALSE}
+gender <- c('male', 'female')
+avg_subjectivity <- c(0.191, 0.196)
+subj_gender <- data.frame(gender, avg_subjectivity)
+subj_gender
+```
+
+##### Subjectivity and missing track
+```{r subj-missing, echo=FALSE}
+missing <- c('nm', 'toon-up', 'trap', 'lure', 'sound', 'drop')
+avg_subjectivity <- c(0.197, 0.172, 0.191, 0.157, 0.218, 0.205)
+subj_missing <- data.frame(missing, avg_subjectivity)
+subj_missing
+```
+
+Average message subjectivity is very consistent across the three factors. The sole result which could arguably be deemed divergent is the average subjectivity for horses at 0.136, but as explained above, horses have very few messages in the corpus so it is not possible at this point to make sweeping judgments about this result. 
+
+##### Subjectivity and Laff points
+Once again, there appears to be stabilization as Laff increases.
+
+```{r subjectivity-plot, echo=FALSE, fig.width=10, fig.height=5}
+avg_subj_by_laff <- corpus %>% group_by(laff) %>% summarise(avg_subjectivity=mean(subjectivity$V1)) %>% arrange(laff) %>% as.data.frame()
+
+
+laff <- avg_subj_by_laff$laff
+avg_subjectivity <- avg_subj_by_laff$avg_subjectivity
+
+ggplot(avg_subj_by_laff, aes(x=laff, y=avg_subjectivity)) + geom_line() + scale_x_continuous(breaks=seq(15,140,5)) + scale_y_continuous(limits=c(0.0,0.5))
+```
+
+##### Most frequent tokens
+```{r mostfreqtokens, echo=FALSE}
+word = c()
+for (m in corpus$message) {
+  m <- m %>% strsplit('[ ]')
+  for (w in m) {
+    word <- append(word, w)
+  }
+}
+
+words <- as.data.frame(word)
+words_freq <- words %>% group_by(words$word) %>% count(words$word, sort=TRUE) %>% as.data.frame()
+
+word <- words_freq$`words$word`
+count <- words_freq$n
+
+final_freqs <- data.frame(word,count)
+final_freqs %>% head(20)
+```
+
+The most frequently occurring tokens differ very little across the two analyses. Below are the most frequent tokens from my first analysis.
+
+```{r mostfreqtokens-prev, echo=FALSE}
+word <- c('i','the','you','a','to','u','my','it','is','beans','me','do','im','and','lol','for','are','like','so','that')
+count <- c(594,309,301,276,239,201,175,170,167,160,146,140,139,132,127,126,119,118,115,115)
+
+final_freqs_first <- data.frame(word,count)
+final_freqs_first
+```
+
+# Discussion
+Few notable NLP-related results were yielded by this analysis. Mean values for character and word count, sentiment, and subjectivity were nearly identical across **species**, **gender**, and **missing** population groups. These values, as well as the most frequently occurring tokens in the corpus, were also extremely similar between my first Toontown Rewritten NLP analysis which did not take demographic factors into consideration. Values of NLP metrics across Laff points appeared initially to fluctuate somewhat heavily but became far more uniform as Laff increased. Further inspection revealed that this pattern is likely owing to the fact that the amount of messages per Laff value tended to be larger at higher Laff values. It is quite interesting that population metrics from a purely numerical standpoint are very similar to those of my demographic analysis given that in the analysis at hand the amount of messages per demographic group was being counted as opposed to the group population itself.
+
+The primary limitation of this analysis is the size of the corpus. Many groups of the population had very few messages and it is thus difficult to accept any broad conclusions from these results. Concluding that certain groups display divergent linguistic behaviour will likely lead to type I error when some of the population subgroups in question possess only a handful of data points. Something of which to also be wary is the potential implication of repeating individual Toons within the dataset and the inherent difficulty of not doing so given the nature of the data being collected. It is possible that some bundles of messages were all spoken by only a handful of distinct individuals which thus casts doubt on the reliability of applying obtained results to larger populations. Additionally, Toons increase their Laff points as they complete tasks and progress through the game's storyline, which may raise questions about the difficulty of teasing apart changes in the individual from changes across subgroups of the population. However, as more data is collected, it is possible that these potential changes may somewhat even out, analogously to how various NLP metrics stabilized in the present analysis as amounts of messages per Laff showed a tendency to increase concurrently with Laff. 
+
+Significantly larger amounts of data will be an absolute necessity for further investigation into this topic. This is challenging as data must be collected by hand which is quite time-consuming, as well as unpredictable due to the game’s fluctuating population and day-to-day changes in player behaviour. Despite these factors, further investigation and future research are planned. I intend to create a perpetually expanding database of Toontown Rewritten NLP data and information and would also like to eventually delve into machine learning and interactive contexts with this data. Specific machine learning directions are uncertain at this point and will likely be shaped by the results of more extensive analyses with expanded corpora. My first demographic analysis also pointed to divergent population groups defined by bundles of minority demographic characteristics; I would like to investigate if these groups also display divergent linguistic behaviour. This shall be done as more data is collected. 
+  
+# Conclusion
+The primary goal of this analysis was to integrate demographic and linguistic research related to Toontown Rewritten. Previous demographic research in this sphere has revealed many interesting patterns and trends while NLP research has been less informative and it was thus hypothesized that using demographics to inform NLP research could produce interesting and consequential results. To test this, a corpus consisting of 4000 chat messages and some demographic information corresponding to the speaker of each message was cleaned and preprocessed and population details and a set of NLP metrics were subsequently calculated. Very few notable results came to light and the results in general bore a strong resemblance to results produced by my previous work. The lack of findings in the present analysis nevertheless does hold important and telling implications: much larger corpora are necessary for future work in this sphere, and the lack of results here cannot be understood as any sort of definitive finding or conclusion. Corpus size, I believe, was by far the primary limitation in this analysis, and the next step for future research is to begin the construction of a much larger corpus integrating demographic and linguistic data like that which was analyzed in this study. This is an absolute necessity to continue to investigate that which may lie at the intersection of these two fields as well as to branch out into other avenues using these data, such as machine learning. As mentioned in the previous section, the results yielded by my demographic analysis published at the beginning of 2022 pointed to the existence of various divergent groups of the population bounded by combinations of certain demographic characteristics, and these groups may indeed be somehow linguistically divergent as well. This is my preferred next direction for my research, and I plan to begin data collection once again very shortly in order to investigate further. 
+
+# References
