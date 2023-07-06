@@ -59,7 +59,7 @@ All demographic characteristics included in the present study with the exception
 
 # Methods
 
-### Preprocessing / cleaning
+### Preprocessing and cleaning
 Prior to beginning the NLP analysis, the corpus was cleaned and preprocessed. Data cleaning consisted of finding typos which were inserted into the corpus during data collection. Preprocessing consisted of removing punctuation from chat messages, rendering all messages lowercase, and trimming any whitespace. The **stringr** package was utilized for preprocessing.  
 
 ```{r unique-species-example}
