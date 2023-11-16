@@ -9,7 +9,7 @@ Latent Dirichlet allocation represents documents as groups of topics, each of wh
 Non-negative matrix factorization performs dimensionality reduction and clustering. A document term matrix is created using TF-IDF, and the algorithm attempts to find a k-dimension approximation in terms of two non-negative factors. Each object, or column of the matrix, is approximated by a linear combination of k reduced dimensions, or basis vectors, each of which can be interpreted as a cluster. We get a measurement of reconstruction error between the original matrix and the approximation and attempt to optimize and refine the approximation to minimize error. Coefficients are updated until the approximation makes sense. 
 
 ## Implementation
-This analysis was performed in Python using scikit-learn and VADER. matplotlib and seaborn were utilized for visualization and pandas and numpy for data manipulation.
+This analysis was performed in Python using scikit-learn and VADER. matplotlib and seaborn were utilized for visualization and pandas for data manipulation.
 
 ## Results and observations
 Both methods were unsuccessful. Neither LDA nor NMF yielded meaningful results or coherent topics. There was also almost no similarity across the two methods regarding to which topic a message was assigned. I hypothesize that this stems from multiple factors: the relatively small size of the corpus, the shortness of the messages, their online chat context origin, and the fact that a sizable proportion of the messages are very informal and do not have an easily discernible or specific subject.
