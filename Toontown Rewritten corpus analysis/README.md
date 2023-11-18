@@ -15,7 +15,7 @@ VADER also returned more nuanced results. It often appeared that textblob would 
 For both analyzers, mean values of subjectivity, message length in tokens, message length in characters, and standard deviations for these measures for all three polarity categories were nearly identical, with only neutral messages appearing to possibly tend to be a few characters shorter in the case of textblob. 
 
 ## Repository contents
-This repository consists of two code files, the message corpus, a .txt file of all individual words in the corpus, and various visualizations created with matplotlib and seaborn.
+This repository consists of two code files (a Jupyter Notebook to display various outputs as well as a Python script), the message corpus, a .txt file of all individual words in the corpus, and various visualizations created with matplotlib and seaborn.
 
 ## Status
 Initial analysis is complete, although there is much more to be explored. I plan to go into more detail regarding distribution of certain tokens and to complete a more comprehensive research style writeup related to this.
