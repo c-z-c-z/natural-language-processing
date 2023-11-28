@@ -1,6 +1,6 @@
 ---
 title: "A preliminary demographically informed analysis of Toontown Rewritten chat message data"
-author: "Ethan CZ"
+author: "E. Ciereszynski"
 date: "`r Sys.Date()`"
 output: pdf_document
 bibliography: references.bib
