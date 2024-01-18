@@ -13,4 +13,4 @@ Unfortunately, few results of interest were produced by this analysis and no bro
 The repository contains an R Markdown file, a PDF report generated using this R Markdown, a BibTex file containing a list of references used in said report, and the demographically informed message corpus.
 
 ## Status
-Initial investigation is complete and path is somewhat clear for further investigation as outlined in the final sections of the paper. As of November 2023, further data collection has been completed and another investigation will be launched very soon.
+Initial investigation is complete and path is somewhat clear for further investigation as outlined in the final sections of the paper. As of November 2023, further data collection has been completed and another investigation will be launched very soon. This second investigation has been completed and published as of January 2024.
