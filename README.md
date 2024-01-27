@@ -10,7 +10,7 @@ This project was dedicated to the analysis of an extensive corpus of Dota 2 chat
 ## LDA and NMF analysis on Toontown Rewritten message corpus
 In this project, I performed latent Dirichlet allocation and non-negative matrix factorization on my preexisting corpus of 4000 Toontown Rewritten chat messages. Analysis was carried out in Python using scikit-learn and VADER. The folder contains two code files and the message corpus
 
-## LDA on extended TTR message corpus
+## LDA topic modeling with gensim on extended TTR message corpus
 --
 
 ## A preliminary demographically informed Toontown Rewritten NLP analysis
