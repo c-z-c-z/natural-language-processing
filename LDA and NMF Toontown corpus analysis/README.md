@@ -18,4 +18,4 @@ Both methods were unsuccessful. Neither LDA nor NMF yielded meaningful results o
 This repository contains two code files and the message corpus. I have included my Jupyter Notebook to handily display visualizations. 
 
 ## Status
-Initial analysis is complete, but the inconclusiveness of these results is frustrating and fascinating. I aim to compile a much larger message corpus and attempt once again to carry out topic modeling. As of performing a couple of tiny updates to this text in November 2023, this much larger message corpus has successfully been compiled, and I intend to perform topic modeling once again in the near future.
+Initial analysis is complete, but the inconclusiveness of these results is frustrating and fascinating. I aim to compile a much larger message corpus and attempt once again to carry out topic modeling. As of performing a couple of tiny updates to this text in November 2023, this much larger message corpus has successfully been compiled, and as of January 2024, a second iteration of LDA topic modeling (this time with gensim) has been performed.
